@@ -1,0 +1,14 @@
+node_modules/
+dist/
+.env
+.DS_Store
+*.log
+
+# AI agent instructions & tooling (kept locally, not published)
+AGENTS.md
+CLAUDE.md
+init.md
+prompts/
+skills/
+.claude/
+.cursor/

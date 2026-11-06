@@ -1,0 +1,17 @@
+# Render Blueprint for the shared-lake WebSocket server (free plan sleeps after ~15 min idle;
+# the client shows "out of reach" and reconnects automatically while it wakes up).
+services:
+  - type: web
+    name: nirvana-shared-lake
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm run server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: ALLOWED_ORIGINS
+        value: https://tvthuanit.github.io
+      - key: TRUST_PROXY
+        value: "1"
