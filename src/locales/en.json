@@ -37,7 +37,7 @@
  "lowHint": "Fewer flowers, trees and effects",
  "reduced": "Reduce movement",
  "reducedHint": "Gentler camera motion and still lanterns",
- "sound": "Ambient sound",
+ "sound": "Sound",
  "soundHint": "Generated locally in your browser",
  "share": "Share the lake",
  "shareHint": "See other wanderers and their lights. Only your random name, position and lanterns are sent; nothing is stored.",
@@ -116,8 +116,16 @@
  ],
  "musicLink": "Play soft music",
  "music": "Soft music",
- "musicHint": "Slow drone and chimes that never repeat, tuned to A = 432 Hz",
+ "musicHint": "Gentle generative pieces tuned to A = 432 Hz; they never repeat exactly",
  "alpha": "Alpha binaural pulse",
  "alphaHint": "A gentle 10 Hz beat between left and right ear. Best with headphones. A sound texture, not a treatment.",
- "volume": "Volume"
+ "volume": "Volume",
+ "track": "Piece",
+ "track0": "Lotus Dawn",
+ "track1": "Moon over Water",
+ "track2": "Singing Bowls",
+ "track3": "Deep Rest",
+ "nextTrack": "Next piece",
+ "lake": "Lake sounds",
+ "lakeHint": "Soft water and distant birds"
 }

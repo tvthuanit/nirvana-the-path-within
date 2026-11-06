@@ -1,9 +1,9 @@
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Volume2,VolumeX,Flame,Flower2,Footprints,Pause,Play,Settings2,X,Info,Move,SunMoon,Users,Shuffle,Music} from 'lucide-react';
+import {Volume2,VolumeX,Flame,Flower2,Footprints,Pause,Play,Settings2,X,Info,Move,SunMoon,Users,Shuffle,Music,SkipForward} from 'lucide-react';
 import World,{type Lantern} from './World';
 import {clampWalkPosition,createLantern,formatTime,randomName,type Point} from './logic';
-import {SanctuaryAudio,type SoundState} from './audio';
+import {SanctuaryAudio,TRACKS,type SoundState} from './audio';
 import {LANGS,detectLang,formatName,translate,type Lang} from './i18n';
 import {Realtime,type Name,type NetStatus,type Peer} from './net';
 import './style.css';
@@ -22,7 +22,7 @@ function LanguageSelect({lang,setLang,label}:{lang:Lang;setLang:(l:Lang)=>void;l
 
 function App(){
  const [lang,setLangState]=useState<Lang>(readLang),[name,setName]=useState<Name>(()=>randomName());
- const [entered,setEntered]=useState(false),[localLanterns,setLocalLanterns]=useState<Lantern[]>([]),[sharedLanterns,setSharedLanterns]=useState<Lantern[]>([]),[sitting,setSitting]=useState(false),[duration,setDuration]=useState(180),[remaining,setRemaining]=useState(180),[running,setRunning]=useState(false),[snd,setSnd]=useState<SoundState>({on:false,music:true,alpha:false,volume:0.7}),[settings,setSettings]=useState(false),[help,setHelp]=useState(false),[low,setLow]=useState(false),[reduced,setReduced]=useState(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false),[message,setMessage]=useState(''),[mobileDirection,setMobileDirection]=useState<Point>({x:0,z:0});
+ const [entered,setEntered]=useState(false),[localLanterns,setLocalLanterns]=useState<Lantern[]>([]),[sharedLanterns,setSharedLanterns]=useState<Lantern[]>([]),[sitting,setSitting]=useState(false),[duration,setDuration]=useState(180),[remaining,setRemaining]=useState(180),[running,setRunning]=useState(false),[snd,setSnd]=useState<SoundState>({on:false,music:true,lake:false,alpha:false,volume:0.7,track:0}),[settings,setSettings]=useState(false),[help,setHelp]=useState(false),[low,setLow]=useState(false),[reduced,setReduced]=useState(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false),[message,setMessage]=useState(''),[mobileDirection,setMobileDirection]=useState<Point>({x:0,z:0});
  const [share,setShare]=useState(false),[status,setStatus]=useState<NetStatus>('off'),[peerIds,setPeerIds]=useState<string[]>([]);
  const t=useCallback((k:string,v?:Record<string,string|number>)=>translate(lang,k,v),[lang]);
  const tRef=useRef(t);tRef.current=t;
@@ -74,7 +74,8 @@ function App(){
   <button aria-label={sound?t('aSoundOff'):t('aSoundOn')} title={t('sound')} onClick={toggleAudio}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button aria-label={t('aHelp')} onClick={()=>setHelp(true)}><Info size={18}/></button><button aria-label={t('aSettings')} onClick={()=>setSettings(true)}><Settings2 size={18}/></button></div></header>
  <aside className="leftnote"><span className="eyebrow">{t('zone')}</span><h2>{t('beHere')}<br/><em>{t('forAWhile')}</em></h2><p>{t('gently')}</p></aside>
  <div className="bottom">
-  {!sound&&<button className="music-link" onClick={()=>applySound({on:true,music:true})}><Music size={13}/> {t('musicLink')}</button>}
+  {!sound?<button className="music-link" onClick={()=>applySound({on:true,music:true})}><Music size={13}/> {t('musicLink')}</button>
+   :snd.music&&<div className="now-playing"><Music size={13}/> {t(`track${snd.track}`)}<button className="link" onClick={()=>applySound({track:(snd.track+1)%TRACKS.length})} aria-label={t('nextTrack')} title={t('nextTrack')}><SkipForward size={12}/></button></div>}
   <div className="whoami">{t('youAre',{name:myName})}<button className="link" onClick={()=>setName(randomName())} aria-label={t('newName')} title={t('newName')}><Shuffle size={13}/></button></div>
   <div className="coords" aria-live="polite"><span className={`status-dot ${online?'live':''}`}/> {statusText} <span className="separator">·</span> {t('lights',{count:lanterns.length})}</div>
   <div className="actionbar"><button onClick={release}><Flame size={19}/><span>{t('release')}</span></button><button onClick={beginSit} disabled={sitting}><Flower2 size={19}/><span>{t('sit')}</span></button><button onClick={()=>setHelp(true)}><Footprints size={19}/><span>{t('explore')}</span></button></div>
@@ -88,6 +89,8 @@ function App(){
   <label className="toggle"><span>{t('reduced')}<small>{t('reducedHint')}</small></span><input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/></label>
   <label className="toggle"><span>{t('sound')}<small>{t('soundHint')}</small></span><input type="checkbox" checked={sound} onChange={toggleAudio}/></label>
   <label className="toggle"><span>{t('music')}<small>{t('musicHint')}</small></span><input type="checkbox" checked={sound&&snd.music} onChange={e=>applySound({music:e.target.checked,on:e.target.checked||sound})}/></label>
+  <label className="toggle"><span>{t('track')}</span><select className="track-select" value={snd.track} onChange={e=>applySound({track:Number(e.target.value),music:true,on:true})}>{TRACKS.map((_,i)=><option key={i} value={i}>{t(`track${i}`)}</option>)}</select></label>
+  <label className="toggle"><span>{t('lake')}<small>{t('lakeHint')}</small></span><input type="checkbox" checked={sound&&snd.lake} onChange={e=>applySound({lake:e.target.checked,on:e.target.checked||sound})}/></label>
   <label className="toggle"><span>{t('alpha')}<small>{t('alphaHint')}</small></span><input type="checkbox" checked={sound&&snd.alpha} onChange={e=>applySound({alpha:e.target.checked,on:e.target.checked||sound})}/></label>
   <label className="toggle"><span>{t('volume')}</span><input type="range" className="volume" min={0} max={1} step={0.05} value={snd.volume} disabled={!sound} onChange={e=>applySound({volume:Number(e.target.value)})}/></label>
   {net.current&&<label className="toggle"><span>{t('share')}<small>{t('shareHint')}</small></span><input type="checkbox" checked={share} onChange={e=>setShare(e.target.checked)}/></label>}

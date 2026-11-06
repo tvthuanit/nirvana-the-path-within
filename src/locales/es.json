@@ -37,7 +37,7 @@
  "lowHint": "Menos flores, árboles y efectos",
  "reduced": "Reducir movimiento",
  "reducedHint": "Cámara más suave y linternas quietas",
- "sound": "Sonido ambiente",
+ "sound": "Sonido",
  "soundHint": "Generado localmente en tu navegador",
  "share": "Compartir el lago",
  "shareHint": "Ve a otros caminantes y sus luces. Solo se envían tu nombre aleatorio, tu posición y tus linternas; no se guarda nada.",
@@ -116,8 +116,16 @@
  ],
  "musicLink": "Poner música suave",
  "music": "Música suave",
- "musicHint": "Un fondo lento y campanas que nunca se repiten, afinado en La = 432 Hz",
+ "musicHint": "Piezas generativas suaves afinadas en La = 432 Hz; nunca se repiten igual",
  "alpha": "Pulso binaural alfa",
  "alphaHint": "Un suave pulso de 10 Hz entre el oído izquierdo y el derecho. Mejor con auriculares. Es una textura sonora, no un tratamiento.",
- "volume": "Volumen"
+ "volume": "Volumen",
+ "track": "Pieza",
+ "track0": "Amanecer de Loto",
+ "track1": "Luna sobre el Agua",
+ "track2": "Cuencos Cantores",
+ "track3": "Descanso Profundo",
+ "nextTrack": "Siguiente pieza",
+ "lake": "Sonidos del lago",
+ "lakeHint": "Agua suave y pájaros lejanos"
 }

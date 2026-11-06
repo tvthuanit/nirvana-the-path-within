@@ -37,7 +37,7 @@
  "lowHint": "Ít hoa, cây và hiệu ứng hơn",
  "reduced": "Giảm chuyển động",
  "reducedHint": "Camera nhẹ nhàng hơn, đèn đứng yên",
- "sound": "Âm thanh môi trường",
+ "sound": "Âm thanh",
  "soundHint": "Được tạo ngay trong trình duyệt của bạn",
  "share": "Chia sẻ mặt hồ",
  "shareHint": "Nhìn thấy những lữ khách khác và ánh đèn của họ. Chỉ gửi tên ngẫu nhiên, vị trí và đèn của bạn; không lưu trữ gì.",
@@ -114,8 +114,16 @@
  ],
  "musicLink": "Bật nhạc nhẹ",
  "music": "Nhạc nhẹ",
- "musicHint": "Nền trầm chậm rãi và tiếng chuông không bao giờ lặp lại, lên dây theo La = 432 Hz",
+ "musicHint": "Những bản nhạc tự sinh nhẹ nhàng, lên dây theo La = 432 Hz, không bao giờ lặp lại y hệt",
  "alpha": "Nhịp alpha hai tai (binaural)",
  "alphaHint": "Nhịp 10 Hz nhẹ nhàng giữa tai trái và tai phải. Nên dùng tai nghe. Đây là kết cấu âm thanh, không phải liệu pháp chữa bệnh.",
- "volume": "Âm lượng"
+ "volume": "Âm lượng",
+ "track": "Bản nhạc",
+ "track0": "Bình Minh Hoa Sen",
+ "track1": "Trăng Trên Mặt Nước",
+ "track2": "Chuông Bát Ngân",
+ "track3": "Nghỉ Sâu",
+ "nextTrack": "Bài tiếp theo",
+ "lake": "Tiếng hồ",
+ "lakeHint": "Nước khẽ vỗ và tiếng chim xa"
 }
