@@ -113,5 +113,11 @@
   "Niebla",
   "Hoja",
   "Onda"
- ]
+ ],
+ "musicLink": "Poner música suave",
+ "music": "Música suave",
+ "musicHint": "Un fondo lento y campanas que nunca se repiten, afinado en La = 432 Hz",
+ "alpha": "Pulso binaural alfa",
+ "alphaHint": "Un suave pulso de 10 Hz entre el oído izquierdo y el derecho. Mejor con auriculares. Es una textura sonora, no un tratamiento.",
+ "volume": "Volumen"
 }

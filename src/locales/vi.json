@@ -111,5 +111,11 @@
   "Sương",
   "Lá",
   "Sóng"
- ]
+ ],
+ "musicLink": "Bật nhạc nhẹ",
+ "music": "Nhạc nhẹ",
+ "musicHint": "Nền trầm chậm rãi và tiếng chuông không bao giờ lặp lại, lên dây theo La = 432 Hz",
+ "alpha": "Nhịp alpha hai tai (binaural)",
+ "alphaHint": "Nhịp 10 Hz nhẹ nhàng giữa tai trái và tai phải. Nên dùng tai nghe. Đây là kết cấu âm thanh, không phải liệu pháp chữa bệnh.",
+ "volume": "Âm lượng"
 }

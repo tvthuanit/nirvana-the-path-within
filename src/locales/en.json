@@ -113,5 +113,11 @@
   "Mist",
   "Leaf",
   "Ripple"
- ]
+ ],
+ "musicLink": "Play soft music",
+ "music": "Soft music",
+ "musicHint": "Slow drone and chimes that never repeat, tuned to A = 432 Hz",
+ "alpha": "Alpha binaural pulse",
+ "alphaHint": "A gentle 10 Hz beat between left and right ear. Best with headphones. A sound texture, not a treatment.",
+ "volume": "Volume"
 }

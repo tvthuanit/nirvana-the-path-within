@@ -7,7 +7,7 @@
 - Release a light: a lantern settles onto the lake and drifts gently; cap at 40 on the lake. No user-entered message or network storage.
 - Sit: traveler sits facing the lake, breathing slows, camera eases to a wide view; compact timer panel (3/5/10 min, begin/pause/leave). Escape or "Leave quietly" ends it freely. Bell when sound is enabled.
 - Escape closes any open dialog.
-- Sound: Web Audio ambient noise and synthesized bell, off by default, only enabled by user gesture.
+- Sound: off by default. A quiet "Play soft music" link under the actions (and the speaker button) turns on lake ambience + generative music tuned to A = 432 Hz. Settings: music, alpha binaural pulse (headphones), volume. Bowl strike on sitting start/end, chime on lantern release. Details: docs/audio-plan.md.
 - Settings: low graphics (no reflections, shadows, sparkles; fewer lotus/reeds/trees) and reduced motion (static flora/lanterns, no walk bob, near-instant camera, no orbit drift).
 - No WebGL: a static message is shown; UI remains usable.
 

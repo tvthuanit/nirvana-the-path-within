@@ -1,9 +1,9 @@
 import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
 import {createRoot} from 'react-dom/client';
-import {Volume2,VolumeX,Flame,Flower2,Footprints,Pause,Play,Settings2,X,Info,Move,SunMoon,Users,Shuffle} from 'lucide-react';
+import {Volume2,VolumeX,Flame,Flower2,Footprints,Pause,Play,Settings2,X,Info,Move,SunMoon,Users,Shuffle,Music} from 'lucide-react';
 import World,{type Lantern} from './World';
 import {clampWalkPosition,createLantern,formatTime,randomName,type Point} from './logic';
-import {SanctuaryAudio} from './audio';
+import {SanctuaryAudio,type SoundState} from './audio';
 import {LANGS,detectLang,formatName,translate,type Lang} from './i18n';
 import {Realtime,type Name,type NetStatus,type Peer} from './net';
 import './style.css';
@@ -22,7 +22,7 @@ function LanguageSelect({lang,setLang,label}:{lang:Lang;setLang:(l:Lang)=>void;l
 
 function App(){
  const [lang,setLangState]=useState<Lang>(readLang),[name,setName]=useState<Name>(()=>randomName());
- const [entered,setEntered]=useState(false),[localLanterns,setLocalLanterns]=useState<Lantern[]>([]),[sharedLanterns,setSharedLanterns]=useState<Lantern[]>([]),[sitting,setSitting]=useState(false),[duration,setDuration]=useState(180),[remaining,setRemaining]=useState(180),[running,setRunning]=useState(false),[sound,setSound]=useState(false),[settings,setSettings]=useState(false),[help,setHelp]=useState(false),[low,setLow]=useState(false),[reduced,setReduced]=useState(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false),[message,setMessage]=useState(''),[mobileDirection,setMobileDirection]=useState<Point>({x:0,z:0});
+ const [entered,setEntered]=useState(false),[localLanterns,setLocalLanterns]=useState<Lantern[]>([]),[sharedLanterns,setSharedLanterns]=useState<Lantern[]>([]),[sitting,setSitting]=useState(false),[duration,setDuration]=useState(180),[remaining,setRemaining]=useState(180),[running,setRunning]=useState(false),[snd,setSnd]=useState<SoundState>({on:false,music:true,alpha:false,volume:0.7}),[settings,setSettings]=useState(false),[help,setHelp]=useState(false),[low,setLow]=useState(false),[reduced,setReduced]=useState(()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches??false),[message,setMessage]=useState(''),[mobileDirection,setMobileDirection]=useState<Point>({x:0,z:0});
  const [share,setShare]=useState(false),[status,setStatus]=useState<NetStatus>('off'),[peerIds,setPeerIds]=useState<string[]>([]);
  const t=useCallback((k:string,v?:Record<string,string|number>)=>translate(lang,k,v),[lang]);
  const tRef=useRef(t);tRef.current=t;
@@ -40,7 +40,7 @@ function App(){
  useEffect(()=>{document.documentElement.lang=lang;document.title=`NIRVANA — ${t('zone').toLowerCase().replace(/^\p{L}/u,c=>c.toUpperCase())}`;},[lang,t]);
  useEffect(()=>()=>{void audio.current.stop();net.current?.disconnect();},[]);
  useEffect(()=>{const esc=(e:KeyboardEvent)=>{if(e.key!=='Escape')return;setHelp(false);setSettings(false);setSitting(false);setRunning(false);};window.addEventListener('keydown',esc);return()=>window.removeEventListener('keydown',esc)},[]);
- useEffect(()=>{if(!running)return;const timer=window.setInterval(()=>setRemaining(r=>{if(r<=1){setRunning(false);audio.current.bell();setMessage(tRef.current('msgDone'));return 0;}return r-1;}),1000);return()=>clearInterval(timer)},[running]);
+ useEffect(()=>{if(!running)return;const timer=window.setInterval(()=>setRemaining(r=>{if(r<=1){setRunning(false);audio.current.bowl();setMessage(tRef.current('msgDone'));return 0;}return r-1;}),1000);return()=>clearInterval(timer)},[running]);
  useEffect(()=>{if(!message)return;const id=setTimeout(()=>setMessage(''),4200);return()=>clearTimeout(id)},[message]);
  // Shared lake: connect only when the visitor opts in.
  useEffect(()=>{const n=net.current;if(!n)return;if(share)n.connect(name);else n.disconnect();},[share]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -50,9 +50,12 @@ function App(){
  const release=()=>{
   if(online)net.current?.releaseLantern();
   else{const lantern=createLantern(released.current++,Date.now());setLocalLanterns(l=>[...l.slice(-39),lantern]);}
-  audio.current.bell();setMessage(t('msgLight'));
+  audio.current.chime();setMessage(t('msgLight'));
  };
- const toggleAudio=async()=>{if(sound){await audio.current.stop();setSound(false)}else{try{await audio.current.start();setSound(true);audio.current.bell()}catch{setMessage(t('msgNoAudio'))}}};
+ const sound=snd.on;
+ // Applied inside the click handler so the first start counts as a user gesture (autoplay policy).
+ const applySound=(patch:Partial<SoundState>)=>{const next={...snd,...patch};setSnd(next);audio.current.set(next).then(()=>{if(patch.on)audio.current.chime();}).catch(()=>{setSnd(s=>({...s,on:false}));setMessage(t('msgNoAudio'));});};
+ const toggleAudio=()=>applySound({on:!sound});
  const beginSit=()=>{setSitting(true);setRemaining(duration);setRunning(false);setMessage(t('msgSit'));};
  const exitSit=()=>{setSitting(false);setRunning(false);setRemaining(duration)};
  const progress=useMemo(()=>Math.max(0,Math.min(100,(duration-remaining)/duration*100)),[duration,remaining]);
@@ -68,21 +71,25 @@ function App(){
  {!entered?<div className="welcome"><div className="welcome-content"><div className="symbol">✿</div><p className="eyebrow">{t('eyebrow')}</p><h1>NIRVANA</h1><p className="subhead">{t('subtitle')}</p><div className="line"/><p className="intro">{t('intro1')}<br/>{t('intro2')}</p><button className="primary" onClick={()=>setEntered(true)}>{t('enter')} <span>↗</span></button><p className="tiny">{t('disclaimer')}</p><LanguageSelect lang={lang} setLang={setLang} label={t('language')}/></div></div>:<>
  <header className="topbar"><div className="brand"><span className="brandmark">✿</span><span>NIRVANA <small>{t('zone')}</small></span></div><div className="topactions">
   {net.current&&<button aria-label={share?t('aShareOff'):t('aShareOn')} aria-pressed={share} title={t('share')} className={share?'on':''} onClick={()=>setShare(s=>!s)}><Users size={18}/></button>}
-  <button aria-label={sound?t('aSoundOff'):t('aSoundOn')} title={t('sound')} onClick={()=>void toggleAudio()}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button aria-label={t('aHelp')} onClick={()=>setHelp(true)}><Info size={18}/></button><button aria-label={t('aSettings')} onClick={()=>setSettings(true)}><Settings2 size={18}/></button></div></header>
+  <button aria-label={sound?t('aSoundOff'):t('aSoundOn')} title={t('sound')} onClick={toggleAudio}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button aria-label={t('aHelp')} onClick={()=>setHelp(true)}><Info size={18}/></button><button aria-label={t('aSettings')} onClick={()=>setSettings(true)}><Settings2 size={18}/></button></div></header>
  <aside className="leftnote"><span className="eyebrow">{t('zone')}</span><h2>{t('beHere')}<br/><em>{t('forAWhile')}</em></h2><p>{t('gently')}</p></aside>
  <div className="bottom">
+  {!sound&&<button className="music-link" onClick={()=>applySound({on:true,music:true})}><Music size={13}/> {t('musicLink')}</button>}
   <div className="whoami">{t('youAre',{name:myName})}<button className="link" onClick={()=>setName(randomName())} aria-label={t('newName')} title={t('newName')}><Shuffle size={13}/></button></div>
   <div className="coords" aria-live="polite"><span className={`status-dot ${online?'live':''}`}/> {statusText} <span className="separator">·</span> {t('lights',{count:lanterns.length})}</div>
   <div className="actionbar"><button onClick={release}><Flame size={19}/><span>{t('release')}</span></button><button onClick={beginSit} disabled={sitting}><Flower2 size={19}/><span>{t('sit')}</span></button><button onClick={()=>setHelp(true)}><Footprints size={19}/><span>{t('explore')}</span></button></div>
   <p className="footnote">{t('footnote')}</p></div>
  <div className="mobile-controls" aria-label={t('aMove')}><div className="dpad"><button aria-label={t('aFwd')} {...dir(0,-1)}>↑</button><div><button aria-label={t('aLeft')} {...dir(-1,0)}>←</button><button aria-label={t('aBack')} {...dir(0,1)}>↓</button><button aria-label={t('aRight')} {...dir(1,0)}>→</button></div></div></div>
  {message&&<div className="toast" role="status">{message}</div>}
- {sitting&&<div className="modal-backdrop sit"><section className="meditation" role="dialog" aria-modal="true" aria-label={t('sitEyebrow')}><button className="close" onClick={exitSit} aria-label={t('aClose')}><X/></button><div className="meditation-icon">✿</div><p className="eyebrow">{t('sitEyebrow')}</p><h2>{t('sitTitle')}</h2><p>{t('sitBody')}</p><div className="clock" aria-live="off">{formatTime(remaining)}</div><div className="progress"><div style={{width:`${progress}%`}}/></div><div className="durations">{[180,300,600].map(n=><button key={n} className={duration===n?'selected':''} onClick={()=>{setDuration(n);setRemaining(n);setRunning(false)}}>{t('minutes',{count:n/60})}</button>)}</div><div className="med-actions"><button className="primary" onClick={()=>{setRunning(!running);if(!running)audio.current.bell()}}>{running?<Pause size={17}/>:<Play size={17}/>} {running?t('pause'):t('begin')}</button><button className="quiet" onClick={exitSit}>{t('leave')}</button></div></section></div>}
+ {sitting&&<div className="modal-backdrop sit"><section className="meditation" role="dialog" aria-modal="true" aria-label={t('sitEyebrow')}><button className="close" onClick={exitSit} aria-label={t('aClose')}><X/></button><div className="meditation-icon">✿</div><p className="eyebrow">{t('sitEyebrow')}</p><h2>{t('sitTitle')}</h2><p>{t('sitBody')}</p><div className="clock" aria-live="off">{formatTime(remaining)}</div><div className="progress"><div style={{width:`${progress}%`}}/></div><div className="durations">{[180,300,600].map(n=><button key={n} className={duration===n?'selected':''} onClick={()=>{setDuration(n);setRemaining(n);setRunning(false)}}>{t('minutes',{count:n/60})}</button>)}</div><div className="med-actions"><button className="primary" onClick={()=>{setRunning(!running);if(!running)audio.current.bowl()}}>{running?<Pause size={17}/>:<Play size={17}/>} {running?t('pause'):t('begin')}</button><button className="quiet" onClick={exitSit}>{t('leave')}</button></div></section></div>}
  {settings&&<div className="modal-backdrop"><section className="dialog" role="dialog" aria-modal="true" aria-label={t('aSettings')}><button className="close" onClick={()=>setSettings(false)} aria-label={t('aClose')}><X/></button><SunMoon size={24}/><h2>{t('settingsTitle')}</h2>
   <LanguageSelect lang={lang} setLang={setLang} label={t('language')}/>
   <label className="toggle"><span>{t('low')}<small>{t('lowHint')}</small></span><input type="checkbox" checked={low} onChange={e=>setLow(e.target.checked)}/></label>
   <label className="toggle"><span>{t('reduced')}<small>{t('reducedHint')}</small></span><input type="checkbox" checked={reduced} onChange={e=>setReduced(e.target.checked)}/></label>
-  <label className="toggle"><span>{t('sound')}<small>{t('soundHint')}</small></span><input type="checkbox" checked={sound} onChange={()=>void toggleAudio()}/></label>
+  <label className="toggle"><span>{t('sound')}<small>{t('soundHint')}</small></span><input type="checkbox" checked={sound} onChange={toggleAudio}/></label>
+  <label className="toggle"><span>{t('music')}<small>{t('musicHint')}</small></span><input type="checkbox" checked={sound&&snd.music} onChange={e=>applySound({music:e.target.checked,on:e.target.checked||sound})}/></label>
+  <label className="toggle"><span>{t('alpha')}<small>{t('alphaHint')}</small></span><input type="checkbox" checked={sound&&snd.alpha} onChange={e=>applySound({alpha:e.target.checked,on:e.target.checked||sound})}/></label>
+  <label className="toggle"><span>{t('volume')}</span><input type="range" className="volume" min={0} max={1} step={0.05} value={snd.volume} disabled={!sound} onChange={e=>applySound({volume:Number(e.target.value)})}/></label>
   {net.current&&<label className="toggle"><span>{t('share')}<small>{t('shareHint')}</small></span><input type="checkbox" checked={share} onChange={e=>setShare(e.target.checked)}/></label>}
   <p className="fine">{t('privacy')}</p></section></div>}
  {help&&<div className="modal-backdrop"><section className="dialog" role="dialog" aria-modal="true" aria-label={t('helpTitle')}><button className="close" onClick={()=>setHelp(false)} aria-label={t('aClose')}><X/></button><Move size={24}/><h2>{t('helpTitle')}</h2><p>{t('helpBody')}</p>

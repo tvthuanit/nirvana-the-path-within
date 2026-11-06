@@ -46,7 +46,7 @@ npm run preview
 - Mobile: touch directional pad.
 - Release a light: add a floating lantern (up to 40).
 - Sit in stillness: choose 3, 5 or 10 minutes; begin/pause/leave freely.
-- Sound: opt-in generated ambience and bell. Mute via top-right button.
+- Sound: off by default. "Play soft music" under the actions starts generated lake ambience and music tuned to A = 432 Hz; Settings adds an alpha binaural pulse (headphones) and volume. All synthesized locally — see docs/audio-plan.md.
 - Settings: language, low graphics, reduced motion, share the lake.
 - Shuffle button next to your name: pick another random name.
 - People button (top right): share the lake with other wanderers (opt-in).
