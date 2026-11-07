@@ -63,7 +63,7 @@ function App(){
  const peerName=useCallback((p:Peer)=>formatName(lang,p.name),[lang]);
  const onPose=useCallback((x:number,z:number,f:number,s:boolean)=>net.current?.sendPose(x,z,f,s),[]);
  const statusText=!share?t('solo'):status==='online'?(peerIds.length?t('shared',{count:peerIds.length}):t('solo')):status==='connecting'?t('connecting'):t('solo');
- const dir=(x:number,z:number)=>({onPointerDown:(e:React.PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);setMobileDirection({x,z});},onPointerUp:()=>setMobileDirection({x:0,z:0}),onPointerCancel:()=>setMobileDirection({x:0,z:0})});
+ const dir=(x:number,z:number)=>({onPointerDown:(e:React.PointerEvent<HTMLButtonElement>)=>{e.currentTarget.setPointerCapture(e.pointerId);setMobileDirection({x,z});},onPointerUp:()=>setMobileDirection({x:0,z:0}),onPointerCancel:()=>setMobileDirection({x:0,z:0}),onContextMenu:(e:React.MouseEvent)=>e.preventDefault()});
 
  // Shown under the actions and inside the sitting panel, so music stays reachable while sitting.
  const musicControl=!sound?<button className="music-link" onClick={()=>applySound({on:true,music:true})}><Music size={13}/> {t('musicLink')}</button>
