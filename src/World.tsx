@@ -1,6 +1,6 @@
 import {useEffect,useLayoutEffect,useMemo,useRef,type MutableRefObject} from 'react';
 import {Canvas,useFrame,useThree,type ThreeEvent} from '@react-three/fiber';
-import {Sky,Sparkles,MeshReflectorMaterial,Html} from '@react-three/drei';
+import {Sparkles,MeshReflectorMaterial,Html} from '@react-three/drei';
 import * as THREE from 'three';
 import type {Peer} from './net';
 import {cameraRelativeStep,clamp,clampWalkPosition,damp,dampAngle,LAKE_RADIUS,PAVILION,type Point} from './logic';
@@ -96,6 +96,47 @@ function Pavilion(){return <group position={[PAVILION.x,0,PAVILION.z]} rotation=
 // Trees right next to the camera are hidden so a trunk never fills the screen.
 function Tree({x,z,s}:{x:number;z:number;s:number}){const ref=useRef<THREE.Group>(null);useFrame(({camera})=>{if(ref.current)ref.current.visible=Math.hypot(camera.position.x-x,camera.position.z-z)>2.4*s;});return <group ref={ref} position={[x,0,z]} scale={s}><mesh position={[0,1.1,0]} castShadow><cylinderGeometry args={[0.12,0.24,2.2,6]}/><meshStandardMaterial color="#4a433c"/></mesh><mesh position={[0,2.65,0]} castShadow><coneGeometry args={[1.2,3.2,7]}/><meshStandardMaterial color="#1e4945" flatShading/></mesh><mesh position={[0,3.6,0]} castShadow><coneGeometry args={[0.82,2.2,7]}/><meshStandardMaterial color="#315e52" flatShading/></mesh></group>}
 
+
+// ---------- open sky: drifting clouds and distant hills ----------
+/** Soft cloud texture painted on a canvas at runtime (no image download). */
+function cloudTexture(seed:number){
+ const c=document.createElement('canvas');c.width=512;c.height=256;const g=c.getContext('2d')!;
+ let r=seed*9301+49297;const rnd=()=>((r=(r*9301+49297)%233280)/233280);
+ for(let i=0;i<22;i++){
+  const x=90+rnd()*332,y=150-Math.sin((x-90)/332*Math.PI)*70*rnd()-rnd()*20,rad=40+rnd()*55;
+  const grd=g.createRadialGradient(x,y,0,x,y,rad);grd.addColorStop(0,'rgba(255,255,255,0.9)');grd.addColorStop(0.6,'rgba(255,255,255,0.45)');grd.addColorStop(1,'rgba(255,255,255,0)');
+  g.fillStyle=grd;g.beginPath();g.arc(x,y,rad,0,Math.PI*2);g.fill();
+ }
+ // Faint blue-grey underside, like real cumulus.
+ g.globalCompositeOperation='source-atop';const shade=g.createLinearGradient(0,90,0,230);shade.addColorStop(0,'rgba(255,255,255,0)');shade.addColorStop(1,'rgba(170,190,210,0.55)');g.fillStyle=shade;g.fillRect(0,0,512,256);
+ const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;return tex;
+}
+const CLOUD_TEX:THREE.Texture[]=[];
+const cloudTex=(i:number)=>(CLOUD_TEX[i%3]??=cloudTexture(i%3+1));
+/** Sky dome with a soft vertical gradient: deep blue overhead, pale near the horizon. Inside the camera far plane. */
+function GradientSky(){
+ const geo=useMemo(()=>{const g=new THREE.SphereGeometry(180,32,16),pos=g.attributes.position,col=new Float32Array(pos.count*3);
+  const zenith=new THREE.Color('#4f93d1'),mid=new THREE.Color('#9cc9e8'),horizon=new THREE.Color('#d9ecf2'),c=new THREE.Color();
+  for(let i=0;i<pos.count;i++){const h=Math.max(0,pos.getY(i)/180);
+   if(h<0.25)c.copy(horizon).lerp(mid,h/0.25);else c.copy(mid).lerp(zenith,Math.min(1,(h-0.25)/0.6));
+   c.toArray(col,i*3);}
+  g.setAttribute('color',new THREE.BufferAttribute(col,3));return g;},[]);
+ return <mesh geometry={geo}><meshBasicMaterial vertexColors side={THREE.BackSide} fog={false} toneMapped={false} depthWrite={false}/></mesh>;
+}
+function Clouds({count,reduced}:{count:number;reduced:boolean}){
+ const clouds=useMemo(()=>Array.from({length:count},(_,i)=>{const a=i*2.3999632297,r=80+(i*37%70);return {x:Math.sin(a)*r,z:Math.cos(a)*r,y:22+(i*13%22),w:40+(i*7%30),speed:0.6+(i%4)*0.25,tex:i};}),[count]);
+ const refs=useRef<(THREE.Sprite|null)[]>([]);
+ useFrame((_,delta)=>{if(reduced)return;const dt=Math.min(delta,0.05);
+  refs.current.forEach((sp,i)=>{if(!sp)return;sp.position.x+=clouds[i].speed*dt;if(sp.position.x>150)sp.position.x=-150;});});
+ return <>{clouds.map((c,i)=><sprite key={i} ref={el=>{refs.current[i]=el}} position={[c.x,c.y,c.z]} scale={[c.w,c.w*0.45,1]}>
+  <spriteMaterial map={cloudTex(c.tex)} transparent opacity={0.9} depthWrite={false} fog={false} toneMapped={false}/></sprite>)}</>;
+}
+/** Low, flat-shaded hills far beyond the trees; fog turns them into soft blue layers. */
+function Hills(){
+ const hills=useMemo(()=>Array.from({length:16},(_,i)=>{const a=i/16*Math.PI*2+(i%3)*0.11,r=105+(i%4)*12;return {x:Math.sin(a)*r,z:Math.cos(a)*r,h:9+(i*7%9),w:34+(i*11%22)};}),[]);
+ return <>{hills.map((h,i)=><mesh key={i} position={[h.x,-1,h.z]} scale={[h.w,h.h,h.w*0.7]}><sphereGeometry args={[1,14,7,0,Math.PI*2,0,Math.PI/2]}/><meshStandardMaterial color="#4f7a6c" flatShading roughness={1}/></mesh>)}</>;
+}
+
 // ---------- the traveler: procedural rig with walk, idle, breathing and seated pose ----------
 // Abstract, genderless figure: matte porcelain, no face or hair; a thin sage scarf hints at the front.
 const BODY=new THREE.MeshStandardMaterial({color:'#ece4d6',roughness:0.45});
@@ -162,7 +203,7 @@ function Scene({start,lanterns,sitting,intro,reduced,low,mobileDirection,onLakeC
  const {camera,gl,clock}=useThree();
  const keys=useRef(new Set<string>());
  const pos=useRef<Point>({...start}),facing=useRef(Math.atan2(-start.x,-start.z)),speed=useRef(0),dir=useRef<Point>({x:0,z:0});
- const orbit=useRef({yaw:Math.atan2(start.x,start.z),pitch:0.38,dist:7.5}); // user intent
+ const orbit=useRef({yaw:Math.atan2(start.x,start.z),pitch:0.22,dist:7.5}); // user intent
  const view=useRef({...orbit.current});                                      // smoothed camera
  const focus=useRef(new THREE.Vector3(start.x,1.2,start.z)),focusTarget=useRef(new THREE.Vector3());
  const ripples=useRef<Ripple[]>([]);
@@ -230,11 +271,14 @@ function Scene({start,lanterns,sitting,intro,reduced,low,mobileDirection,onLakeC
  const trees=useMemo(()=>Array.from({length:low?18:38},(_,i)=>{const a=i*2.3999632297;const r=17+(i%5)*1.9;return {x:Math.sin(a)*r,z:Math.cos(a)*r,s:0.8+(i%4)*0.2};}),[low]);
  const stones=useMemo(()=>Array.from({length:16},(_,i)=>{const a=i*0.41+(i%3)*0.9;return {x:Math.sin(a)*9.1,z:Math.cos(a)*9.1,s:0.12+(i%4)*0.06,r:i};}),[]);
  return <>
-  <color attach="background" args={['#a3c4bb']}/><fog attach="fog" args={['#a3c4bb',24,70]}/>
-  <ambientLight intensity={0.7} color="#d9e7df"/><hemisphereLight intensity={0.85} color="#fff1dc" groundColor="#4d6556"/>
-  <directionalLight position={[-9,18,-12]} intensity={2.2} color="#ffe2ad" castShadow={!low} shadow-mapSize={[1024,1024]} shadow-camera-left={-22} shadow-camera-right={22} shadow-camera-top={22} shadow-camera-bottom={-22} shadow-camera-far={60} shadow-bias={-0.0005}/>
-  <Sky sunPosition={[-15,4,-20]} turbidity={8} rayleigh={2} mieCoefficient={0.02}/>
-  <mesh rotation-x={-Math.PI/2} position-y={-0.06} receiveShadow><circleGeometry args={[85,96]}/><meshStandardMaterial color="#537467" roughness={1}/></mesh>
+  {/* Clear blue day: fog matches the pale horizon so distance fades into air, not grey haze. */}
+  <color attach="background" args={['#bcd9e6']}/><fog attach="fog" args={['#c4dde6',32,150]}/>
+  <ambientLight intensity={0.6} color="#e4f0f2"/><hemisphereLight intensity={0.9} color="#d6ebff" groundColor="#4d6556"/>
+  <directionalLight position={[-9,18,-12]} intensity={2.3} color="#fff1d6" castShadow={!low} shadow-mapSize={[1024,1024]} shadow-camera-left={-22} shadow-camera-right={22} shadow-camera-top={22} shadow-camera-bottom={-22} shadow-camera-far={60} shadow-bias={-0.0005}/>
+  <GradientSky/>
+  <Clouds count={low?7:14} reduced={reduced}/>
+  <Hills/>
+  <mesh rotation-x={-Math.PI/2} position-y={-0.06} receiveShadow><circleGeometry args={[160,96]}/><meshStandardMaterial color="#537467" roughness={1}/></mesh>
   <mesh rotation-x={-Math.PI/2} position-y={-0.03} receiveShadow><ringGeometry args={[8.95,10.3,96]}/><meshStandardMaterial color="#b3a88a" roughness={1}/></mesh>
   <mesh rotation-x={-Math.PI/2} onClick={lakeClick}><circleGeometry args={[8.95,80]}/>
    {low?<meshStandardMaterial color="#357b7d" roughness={0.25} metalness={0.2}/>

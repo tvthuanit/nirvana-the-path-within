@@ -6,3 +6,4 @@
 .now-playing{display:inline-flex;align-items:center;gap:7px;color:#eed3ac;font-size:12px;letter-spacing:.04em}.track-select{font:inherit;background:rgba(9,36,42,.6);color:#f6f1e6;border:1px solid rgba(238,245,233,.3);border-radius:6px;padding:6px 10px}
 .dialog,.meditation{max-height:calc(100dvh - 32px);overflow-y:auto;overscroll-behavior:contain}
 .toggle input{flex-shrink:0}.toggle input.volume{width:140px;height:auto}
+.sit-music{margin:6px 0 2px;display:flex;justify-content:center}
